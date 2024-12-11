@@ -1,17 +1,36 @@
 const registrationService = require("../services/registrationService");
 const mockData = require("../helpers/mockData");
+const User = require("../models/User");
 
 module.exports = (bot) => {
   // Start komandasi
-  bot.onText(/\/start/, (msg) => {
+  bot.onText(/\/start/, async (msg) => {
     const chatId = msg.chat.id;
-    bot.sendMessage(chatId, "Tumanni tanlang:", {
-      reply_markup: {
-        inline_keyboard: mockData.districts.map((district) => [
-          { text: district, callback_data: `district_${district}` },
-        ]),
-      },
-    });
+    console.log(chatId);
+    const Finduser = await User.findOne({ chatId: chatId });
+    console.log(Finduser);
+    if (Finduser) {
+      bot.sendMessage(
+        chatId,
+        `Assalamu aleykum! <b>${Finduser?.fio}</b>\n\n✅ Siz allaqachon ro'yxatga qo'shilgansiz.\n\n` +
+          `ℹ️ Sizning bizdagi ma'lumotlartingiz:\n` +
+          `<b>👤 Ism:</b> ${Finduser?.fio}\n` +
+          `<b>🆔 ID:</b> ${Finduser?.chatId}\n` +
+          `<b>🏢 Tuman:</b> ${Finduser?.district}\n` +
+          `<b>🏫 Maktab:</b> ${Finduser?.school}\n` +
+          `<b>📕 Fan:</b> ${Finduser?.subject}\n` +
+          `<b>📞 Telefon:</b> ${Finduser?.phone}`,
+        { parse_mode: "HTML" } // HTML formatini ishlatyapmiz
+      );
+    } else {
+      bot.sendMessage(chatId, "Tumanni tanlang:", {
+        reply_markup: {
+          inline_keyboard: mockData.districts.map((district) => [
+            { text: district, callback_data: `district_${district}` },
+          ]),
+        },
+      });
+    }
   });
 
   bot.on("callback_query", async (query) => {
@@ -70,10 +89,11 @@ module.exports = (bot) => {
       bot.deleteMessage(chatId, messageId); // Eski xabarni o'chirish
       bot.sendMessage(
         chatId,
-        `Tanlangan ma'lumotlaringiz:\n\n` +
+        `Ma'lumotlar to'g'riligini tekshiring:\n\n` +
           `👤 Ism: ${user.fio}\n` +
           `🏢 Tuman: ${user.district}\n` +
           `🏫 Maktab: ${user.school}\n` +
+          `📕 Fan: ${user.subject}\n` +
           `📞 Telefon: ${user.phone}`,
         {
           reply_markup: {
@@ -101,6 +121,7 @@ module.exports = (bot) => {
           district: user.district,
           school: user.school,
           fio: user.fio,
+          subject: user.subject,
           phone: user.phone,
           role: user.role,
         });
@@ -108,12 +129,12 @@ module.exports = (bot) => {
         bot.deleteMessage(chatId, messageId); // Eski xabarni o'chirish
         bot.sendMessage(
           chatId,
-          "✅ Ma'lumotlaringiz muvaffaqiyatli saqlandi. Rahmat!"
+          "✅ Ma'lumotlaringiz muvaffaqiyatli saqlandi. Rahmat!\n\nQaytadan /start buyrug'ini bering!"
         );
       } catch (error) {
         bot.sendMessage(
           chatId,
-          "❌ Ma'lumotlarni saqlashda xatolik yuz berdi."
+          "❌ Ma'lumotlarni saqlashda xatolik yuz berdi. @anonim_opisis"
         );
         console.error(error.message);
       }
